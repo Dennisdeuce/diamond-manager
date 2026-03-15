@@ -1,2 +1,0 @@
-@echo off
-curl -s -w "\nHTTP_CODE:%%{http_code}" -X POST "https://kyymwuxswcokusauunap.supabase.co/auth/v1/signup" -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5eW13dXhzd2Nva3VzYXV1bmFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyNTQ2NjgsImV4cCI6MjA4NjgzMDY2OH0.MDZ5JIWrXULejloocxxKUwIKW9Z7qZHwLs6ODJSmlEU" -H "Content-Type: application/json" -d "{\"email\":\"dmtest0315@gmail.com\",\"password\":\"TestPass123!\"}" > _test_signup_result.txt 2>&1

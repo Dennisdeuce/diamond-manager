@@ -4,3 +4,8 @@ dist
 .env.local
 *.local
 .DS_Store
+_*.bat
+_*.log
+_*.txt
+*.log
+.claude/
