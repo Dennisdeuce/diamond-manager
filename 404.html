@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Diamond Manager</title>
+    <script>
+      // GitHub Pages SPA redirect — redirect all paths to index.html with hash
+      // This handles direct URL access and page refreshes on GitHub Pages
+      var path = window.location.pathname.replace('/diamond-manager', '');
+      if (path && path !== '/' && path !== '/index.html') {
+        window.location.replace(
+          window.location.origin + '/diamond-manager/#' + path +
+          (window.location.search || '') +
+          (window.location.hash || '')
+        );
+      } else {
+        window.location.replace(window.location.origin + '/diamond-manager/');
+      }
+    </script>
+  </head>
+  <body>
+    <p>Redirecting...</p>
+  </body>
+</html>
