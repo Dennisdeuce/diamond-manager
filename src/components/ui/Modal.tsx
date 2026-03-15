@@ -39,12 +39,12 @@ export function Modal({ open, onClose, title, children, maxWidth = 'md' }: Modal
   }[maxWidth]
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-navy-900/50 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div className="fixed inset-0 bg-navy-900/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className={`relative bg-white rounded-2xl shadow-xl w-full ${widthClass} max-h-[90vh] overflow-y-auto`}>
         <div className="sticky top-0 bg-white rounded-t-2xl border-b border-cream-200 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-lg font-bold text-navy-700">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-cream-200 text-navy-400 hover:text-navy-600 transition-colors">
+          <h2 id="modal-title" className="text-lg font-bold text-navy-700">{title}</h2>
+          <button onClick={onClose} className="p-1 rounded-lg hover:bg-cream-200 text-navy-400 hover:text-navy-600 transition-colors" aria-label="Close dialog">
             <X size={20} />
           </button>
         </div>

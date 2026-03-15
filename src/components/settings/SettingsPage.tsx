@@ -1,20 +1,28 @@
-import { useState, useRef } from 'react'
-import { Upload, ExternalLink, RefreshCw } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { useTeam } from '../../contexts/TeamContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { Card } from '../ui/Card'
 import { Button } from '../ui/Button'
 import { EmptyState } from '../ui/EmptyState'
-import { parseSpreadsheet } from '../../services/playerImport'
 
 export function SettingsPage() {
+  usePageTitle('Settings')
   const { currentTeam, updateTeam } = useTeam()
   const { isDemoMode } = useAuth()
   const [teamName, setTeamName] = useState(currentTeam?.name || '')
   const [teamSeason, setTeamSeason] = useState(currentTeam?.season || '')
   const [teamAge, setTeamAge] = useState(currentTeam?.age_group || '')
-  const [gcStatus, setGcStatus] = useState<'disconnected' | 'connected'>('disconnected')
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [saved, setSaved] = useState(false)
+
+  // Sync form state when switching teams
+  useEffect(() => {
+    if (currentTeam) {
+      setTeamName(currentTeam.name)
+      setTeamSeason(currentTeam.season || '')
+      setTeamAge(currentTeam.age_group || '')
+    }
+  }, [currentTeam?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!currentTeam) {
     return <EmptyState title="No Team Selected" description="Select a team to manage settings." />
@@ -26,6 +34,8 @@ export function SettingsPage() {
       season: teamSeason.trim() || null,
       age_group: teamAge.trim() || null,
     })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
@@ -43,6 +53,7 @@ export function SettingsPage() {
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
               className="input-field"
+              maxLength={100}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -54,6 +65,7 @@ export function SettingsPage() {
                 onChange={(e) => setTeamSeason(e.target.value)}
                 className="input-field"
                 placeholder="e.g. Spring 2026"
+                maxLength={50}
               />
             </div>
             <div>
@@ -64,12 +76,13 @@ export function SettingsPage() {
                 onChange={(e) => setTeamAge(e.target.value)}
                 className="input-field"
                 placeholder="e.g. 12U"
+                maxLength={30}
               />
             </div>
           </div>
           <div className="flex justify-end">
             <Button variant="primary" size="sm" onClick={handleSaveTeam} disabled={isDemoMode}>
-              Save Changes
+              {saved ? 'Saved!' : 'Save Changes'}
             </Button>
           </div>
         </div>
@@ -82,43 +95,20 @@ export function SettingsPage() {
           Import player stats and game data from GameChanger to power auto-suggestions.
         </p>
 
-        <div className="flex items-center gap-3 p-3 rounded-lg bg-cream-50 border border-cream-300 mb-4">
-          <div className={`w-3 h-3 rounded-full ${gcStatus === 'connected' ? 'bg-green-500' : 'bg-navy-300'}`} />
-          <span className="text-sm text-navy-600 font-medium">
-            {gcStatus === 'connected' ? 'Connected to GameChanger' : 'Not Connected'}
-          </span>
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-cream-50 border border-cream-300">
+          <div className="w-3 h-3 rounded-full bg-navy-300" />
+          <span className="text-sm text-navy-600 font-medium">Coming Soon</span>
         </div>
-
-        <div className="space-y-3">
-          <div>
-            <h3 className="text-sm font-semibold text-navy-600 mb-2">Import Stats from CSV</h3>
-            <p className="text-xs text-navy-300 mb-2">
-              Export your team stats from GameChanger as CSV, then upload here.
-            </p>
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="border-2 border-dashed border-cream-300 rounded-lg p-6 text-center cursor-pointer hover:border-navy-300 hover:bg-cream-50 transition-all"
-            >
-              <Upload size={24} className="mx-auto text-navy-300 mb-2" />
-              <p className="text-sm text-navy-500">Upload GameChanger CSV export</p>
-            </div>
-            <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" />
-          </div>
-
-          <div className="border-t border-cream-200 pt-3">
-            <h3 className="text-sm font-semibold text-navy-600 mb-1">API Connection</h3>
-            <p className="text-xs text-navy-300">
-              GameChanger API integration coming soon. For now, use CSV import to sync your stats.
-            </p>
-          </div>
-        </div>
+        <p className="text-xs text-navy-300 mt-3">
+          GameChanger API integration is under development. For now, import players from the Roster page using CSV.
+        </p>
       </Card>
 
       {/* About */}
       <Card>
         <h2 className="text-lg font-bold text-navy-700 mb-2">About Diamond Manager</h2>
         <p className="text-sm text-navy-400">
-          Version 1.0.0 — Your season's source of truth for lineups, batting orders, and field positions.
+          Version 1.1.0 — Your season's source of truth for lineups, batting orders, and field positions.
         </p>
         {isDemoMode && (
           <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">

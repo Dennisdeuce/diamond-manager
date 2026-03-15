@@ -73,6 +73,7 @@ export function PlayerForm({ player, onSubmit, onCancel, loading }: PlayerFormPr
             placeholder="Jake"
             required
             autoFocus
+            maxLength={50}
           />
         </div>
         <div>
@@ -84,6 +85,7 @@ export function PlayerForm({ player, onSubmit, onCancel, loading }: PlayerFormPr
             className="input-field"
             placeholder="Smith"
             required
+            maxLength={50}
           />
         </div>
       </div>
@@ -148,6 +150,7 @@ export function PlayerForm({ player, onSubmit, onCancel, loading }: PlayerFormPr
           className="input-field resize-none"
           rows={2}
           placeholder="Any additional notes..."
+          maxLength={500}
         />
       </div>
 

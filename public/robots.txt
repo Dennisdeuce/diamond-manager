@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://dennisdeuce.github.io/diamond-manager/sitemap.xml

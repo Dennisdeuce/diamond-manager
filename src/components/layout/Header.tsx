@@ -138,6 +138,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               className="input-field"
               placeholder="e.g. Court Crushers"
               autoFocus
+              maxLength={100}
             />
           </div>
           <div>
@@ -148,6 +149,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               onChange={(e) => setNewTeamSeason(e.target.value)}
               className="input-field"
               placeholder="e.g. Spring 2026"
+              maxLength={50}
             />
           </div>
           <div>
@@ -158,6 +160,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               onChange={(e) => setNewTeamAge(e.target.value)}
               className="input-field"
               placeholder="e.g. 12U, High School, Adult"
+              maxLength={30}
             />
           </div>
           <div className="flex gap-3 justify-end pt-2">

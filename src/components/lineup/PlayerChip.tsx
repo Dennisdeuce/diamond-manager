@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import { clsx } from 'clsx'
 import { GripVertical, X } from 'lucide-react'
-import type { Player, FieldPosition } from '../../types'
+import type { Player, FieldPosition, PlayerPositionHistory } from '../../types'
 
 interface PlayerChipProps {
   player: Player
@@ -10,9 +10,10 @@ interface PlayerChipProps {
   showRemove?: boolean
   onRemove?: () => void
   dragId?: string
+  positionHistory?: PlayerPositionHistory[]
 }
 
-export function PlayerChip({ player, variant = 'bench', fieldPosition, showRemove, onRemove, dragId }: PlayerChipProps) {
+export function PlayerChip({ player, variant = 'bench', fieldPosition, showRemove, onRemove, dragId, positionHistory }: PlayerChipProps) {
   const id = dragId || `player-${player.id}`
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id,
@@ -23,6 +24,11 @@ export function PlayerChip({ player, variant = 'bench', fieldPosition, showRemov
     transform: `translate(${transform.x}px, ${transform.y}px)`,
     zIndex: 50,
   } : undefined
+
+  // Find position count for the currently assigned field position
+  const posCount = fieldPosition && positionHistory
+    ? positionHistory.find(h => h.player_id === player.id && h.field_position === fieldPosition)?.times_played
+    : undefined
 
   return (
     <div
@@ -56,6 +62,18 @@ export function PlayerChip({ player, variant = 'bench', fieldPosition, showRemov
           variant === 'lineup' ? 'bg-white/20' : 'bg-navy-500/10'
         )}>
           {fieldPosition}
+        </span>
+      )}
+      {posCount != null && posCount > 0 && (
+        <span className={clsx(
+          'text-[10px] font-bold px-1 py-0.5 rounded-full leading-none',
+          variant === 'lineup'
+            ? 'bg-accent-red/80 text-white'
+            : 'bg-field-green/20 text-field-green'
+        )}
+          title={`Played ${fieldPosition} ${posCount} time${posCount !== 1 ? 's' : ''}`}
+        >
+          {posCount}x
         </span>
       )}
       {showRemove && onRemove && (

@@ -1,5 +1,4 @@
 import type { Player, DraftLineup, Game } from '../types'
-import { BATTING_SLOT_LABELS } from '../lib/constants'
 
 export function formatLineupText(
   draft: DraftLineup,

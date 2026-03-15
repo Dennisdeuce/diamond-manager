@@ -15,6 +15,16 @@ const navItems = [
   { to: '/settings', label: 'Settings', icon: Settings },
 ]
 
+// Baseball stitching SVG pattern
+function BaseballStitching() {
+  return (
+    <svg width="100%" height="8" viewBox="0 0 256 8" preserveAspectRatio="none" className="opacity-30">
+      <path d="M0,4 Q16,0 32,4 Q48,8 64,4 Q80,0 96,4 Q112,8 128,4 Q144,0 160,4 Q176,8 192,4 Q208,0 224,4 Q240,8 256,4"
+        fill="none" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 export function Sidebar({ open, onClose }: SidebarProps) {
   return (
     <>
@@ -30,24 +40,41 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="px-5 py-5 flex items-center justify-between border-b border-navy-500">
+        <div className="px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center">
-              <svg width="22" height="22" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="38" fill="none" stroke="#F5F0E8" strokeWidth="3" />
-                <path d="M 30 28 Q 50 18, 70 28" fill="none" stroke="#C8102E" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 30 72 Q 50 82, 70 72" fill="none" stroke="#C8102E" strokeWidth="3" strokeLinecap="round" />
+            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+              <svg width="26" height="26" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#F5F0E8" strokeWidth="2.5" />
+                {/* Baseball stitching - top arc */}
+                <path d="M 28 30 Q 38 20, 50 18 Q 62 20, 72 30" fill="none" stroke="#C8102E" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="32" y1="25" x2="34" y2="29" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="42" y1="20" x2="43" y2="24" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="57" y1="20" x2="57" y2="24" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="67" y1="25" x2="66" y2="29" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                {/* Baseball stitching - bottom arc */}
+                <path d="M 28 70 Q 38 80, 50 82 Q 62 80, 72 70" fill="none" stroke="#C8102E" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="32" y1="75" x2="34" y2="71" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="42" y1="80" x2="43" y2="76" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="57" y1="80" x2="57" y2="76" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
+                <line x1="67" y1="75" x2="66" y2="71" stroke="#C8102E" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </div>
-            <span className="text-white font-condensed font-bold text-lg tracking-wide">DIAMOND MGR</span>
+            <div>
+              <span className="text-white font-condensed font-bold text-lg tracking-wide block leading-tight">DIAMOND MGR</span>
+            </div>
           </div>
           <button onClick={onClose} className="lg:hidden text-navy-300 hover:text-white p-1">
             <X size={20} />
           </button>
         </div>
 
+        {/* Stitching divider */}
+        <div className="px-4 mb-2">
+          <BaseballStitching />
+        </div>
+
         {/* Nav */}
-        <nav className="mt-4 px-3 space-y-1">
+        <nav className="px-3 space-y-1" aria-label="Main navigation">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -69,9 +96,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-navy-500">
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="px-1 mb-3">
+            <BaseballStitching />
+          </div>
           <div className="text-xs text-navy-300 text-center">
-            Diamond Manager v1.0
+            Diamond Manager v1.1
           </div>
         </div>
       </aside>

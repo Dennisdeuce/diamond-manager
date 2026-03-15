@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTeam } from '../../contexts/TeamContext'
 import { useGames } from '../../hooks/useGames'
 import { usePlayers } from '../../hooks/usePlayers'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { EmptyState } from '../ui/EmptyState'
@@ -81,6 +82,7 @@ function PositionMatrix({ players, positionHistory }: {
 }
 
 export function SeasonHistoryPage() {
+  usePageTitle('Season History')
   const { currentTeam } = useTeam()
   const { isDemoMode } = useAuth()
   const { games } = useGames()

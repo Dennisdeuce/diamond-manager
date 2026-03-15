@@ -39,6 +39,8 @@ export interface Game {
   game_type: GameType
   notes: string | null
   gamechanger_id: string | null
+  score_us: number | null
+  score_them: number | null
   created_at: string
   updated_at: string
 }

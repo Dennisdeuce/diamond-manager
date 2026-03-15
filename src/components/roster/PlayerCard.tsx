@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { Edit2, Trash2 } from 'lucide-react'
 import { Badge } from '../ui/Badge'
 import type { Player } from '../../types'
@@ -8,7 +9,7 @@ interface PlayerCardProps {
   onDelete: (id: string) => void
 }
 
-export function PlayerCard({ player, onEdit, onDelete }: PlayerCardProps) {
+export const PlayerCard = memo(function PlayerCard({ player, onEdit, onDelete }: PlayerCardProps) {
   return (
     <div className="card-hover flex items-center gap-4 group">
       {/* Jersey Number */}
@@ -42,7 +43,7 @@ export function PlayerCard({ player, onEdit, onDelete }: PlayerCardProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
         <button
           onClick={() => onEdit(player)}
           className="p-2 rounded-lg hover:bg-cream-200 text-navy-400 hover:text-navy-600 transition-colors"
@@ -58,4 +59,4 @@ export function PlayerCard({ player, onEdit, onDelete }: PlayerCardProps) {
       </div>
     </div>
   )
-}
+})

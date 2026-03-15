@@ -1,16 +1,19 @@
+import { memo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { clsx } from 'clsx'
 import { Wand2 } from 'lucide-react'
 import { PlayerChip } from './PlayerChip'
 import { Button } from '../ui/Button'
 import { BATTING_SLOT_LABELS } from '../../lib/constants'
-import type { Player, DraftLineup } from '../../types'
+import type { Player, DraftLineup, PlayerPositionHistory } from '../../types'
 
 interface BattingOrderTabProps {
   draft: DraftLineup
   players: Player[]
   onAutoSuggest: () => void
   onRemove: (playerId: string) => void
+  hideAutoSuggest?: boolean
+  positionHistory?: PlayerPositionHistory[]
 }
 
 function BattingSlot({
@@ -18,11 +21,13 @@ function BattingSlot({
   player,
   fieldPosition,
   onRemove,
+  positionHistory,
 }: {
   slotNumber: number
   player: Player | null
   fieldPosition: string | null
   onRemove?: () => void
+  positionHistory?: PlayerPositionHistory[]
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `batting-slot-${slotNumber}`,
@@ -41,10 +46,12 @@ function BattingSlot({
             : 'border-dashed border-cream-300 bg-cream-50'
       )}
     >
-      {/* Slot Number */}
+      {/* Slot Number — scoreboard style */}
       <div className={clsx(
-        'w-8 h-8 rounded-full flex items-center justify-center font-condensed font-bold text-lg shrink-0',
-        player ? 'bg-navy-500 text-white' : 'bg-cream-300 text-navy-400'
+        'w-8 h-8 rounded-md flex items-center justify-center font-condensed font-bold text-lg shrink-0 border',
+        player
+          ? 'bg-navy-600 text-white border-navy-700 shadow-inner'
+          : 'bg-cream-200 text-navy-400 border-cream-300'
       )}>
         {slotNumber}
       </div>
@@ -59,6 +66,7 @@ function BattingSlot({
             showRemove
             onRemove={onRemove}
             dragId={`lineup-player-${player.id}`}
+            positionHistory={positionHistory}
           />
         ) : (
           <span className="text-sm text-navy-300 italic">
@@ -75,18 +83,20 @@ function BattingSlot({
   )
 }
 
-export function BattingOrderTab({ draft, players, onAutoSuggest, onRemove }: BattingOrderTabProps) {
+export const BattingOrderTab = memo(function BattingOrderTab({ draft, players, onAutoSuggest, onRemove, hideAutoSuggest, positionHistory }: BattingOrderTabProps) {
   const playerMap = new Map(players.map(p => [p.id, p]))
 
   return (
     <div>
-      {/* Auto-Suggest Button */}
-      <div className="flex justify-end mb-4">
-        <Button variant="secondary" size="sm" onClick={onAutoSuggest}>
-          <Wand2 size={16} />
-          Auto Suggest
-        </Button>
-      </div>
+      {/* Auto-Suggest Button (hidden when parent provides its own) */}
+      {!hideAutoSuggest && (
+        <div className="flex justify-end mb-4">
+          <Button variant="secondary" size="sm" onClick={onAutoSuggest}>
+            <Wand2 size={16} />
+            Auto Suggest
+          </Button>
+        </div>
+      )}
 
       {/* Batting Slots */}
       <div className="space-y-2">
@@ -99,10 +109,11 @@ export function BattingOrderTab({ draft, players, onAutoSuggest, onRemove }: Bat
               player={player}
               fieldPosition={slot.fieldPosition}
               onRemove={slot.playerId ? () => onRemove(slot.playerId!) : undefined}
+              positionHistory={positionHistory}
             />
           )
         })}
       </div>
     </div>
   )
-}
+})

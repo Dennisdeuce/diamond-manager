@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useTeam } from '../contexts/TeamContext'
-import type { LineupEntry, FieldPosition, DraftLineup, LineupSlot } from '../types'
+import type { FieldPosition, DraftLineup, LineupSlot } from '../types'
 import { BATTING_SLOTS, EMPTY_DRAFT_LINEUP } from '../lib/constants'
 
 export function useLineup(gameId: string | undefined) {
@@ -183,54 +183,54 @@ export function useLineup(gameId: string | undefined) {
     }))
   }
 
-  // Save lineup to DB
-  const saveLineup = async (finalize = false) => {
-    if (!gameId || !currentTeam) return
+  const [saveError, setSaveError] = useState<string | null>(null)
+
+  // Save lineup to DB (atomic via RPC)
+  const saveLineup = async (finalize = false): Promise<boolean> => {
+    if (!gameId || !currentTeam) return false
 
     if (isDemoMode) {
       localStorage.setItem(`demo-lineup-${gameId}`, JSON.stringify(draft))
-      return
+      return true
     }
 
     setSaving(true)
-
-    // Create or get lineup
-    let lineupId = draft.lineupId
-    if (!lineupId) {
-      const { data: newLineup, error } = await supabase
-        .from('lineups')
-        .insert({ game_id: gameId, team_id: currentTeam.id, label: 'Starting', is_final: finalize })
-        .select()
-        .single()
-
-      if (error || !newLineup) { setSaving(false); return }
-      lineupId = newLineup.id
-    } else {
-      await supabase
-        .from('lineups')
-        .update({ is_final: finalize, updated_at: new Date().toISOString() })
-        .eq('id', lineupId)
-    }
-
-    // Delete existing entries and re-insert
-    await supabase.from('lineup_entries').delete().eq('lineup_id', lineupId)
+    setSaveError(null)
 
     const entries = draft.slots
       .filter(s => s.playerId)
       .map(s => ({
-        lineup_id: lineupId!,
         player_id: s.playerId!,
         batting_order: s.battingOrder,
         field_position: s.fieldPosition || 'BN',
       }))
 
-    if (entries.length > 0) {
-      await supabase.from('lineup_entries').insert(entries)
-    }
+    try {
+      const { data: lineupId, error } = await supabase.rpc('save_lineup_entries', {
+        p_lineup_id: draft.lineupId || null,
+        p_game_id: gameId,
+        p_team_id: currentTeam.id,
+        p_is_final: finalize,
+        p_entries: entries,
+      })
 
-    setDraft(prev => ({ ...prev, lineupId }))
-    setIsFinal(finalize)
-    setSaving(false)
+      if (error) {
+        console.error('Save lineup error:', error)
+        setSaveError(error.message || 'Failed to save lineup')
+        setSaving(false)
+        return false
+      }
+
+      setDraft(prev => ({ ...prev, lineupId: lineupId as string }))
+      setIsFinal(finalize)
+      setSaving(false)
+      return true
+    } catch (err) {
+      console.error('Save lineup exception:', err)
+      setSaveError('Network error — check your connection and try again.')
+      setSaving(false)
+      return false
+    }
   }
 
   const assignedPlayerIds = new Set(draft.slots.filter(s => s.playerId).map(s => s.playerId!))
@@ -240,6 +240,7 @@ export function useLineup(gameId: string | undefined) {
     draft,
     loading,
     saving,
+    saveError,
     isFinal,
     assignToBattingOrder,
     assignFieldPosition,

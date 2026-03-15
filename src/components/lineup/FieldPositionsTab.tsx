@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { clsx } from 'clsx'
 import { DiamondSVG } from './DiamondSVG'
@@ -11,7 +12,7 @@ interface FieldPositionsTabProps {
   positionHistory?: PlayerPositionHistory[]
 }
 
-export function FieldPositionsTab({ draft, players, positionHistory = [] }: FieldPositionsTabProps) {
+export const FieldPositionsTab = memo(function FieldPositionsTab({ draft, players, positionHistory = [] }: FieldPositionsTabProps) {
   const playerMap = new Map(players.map(p => [p.id, p]))
 
   // Build position history map: playerId -> { position -> count }
@@ -97,4 +98,4 @@ export function FieldPositionsTab({ draft, players, positionHistory = [] }: Fiel
       </div>
     </div>
   )
-}
+})

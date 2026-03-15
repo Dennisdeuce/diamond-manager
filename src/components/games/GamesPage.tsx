@@ -1,20 +1,45 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, Calendar, MapPin, Trash2, Edit2, ClipboardList } from 'lucide-react'
+import { Plus, Calendar, MapPin, Trash2, ClipboardList, Trophy, Home, Plane } from 'lucide-react'
 import { useGames } from '../../hooks/useGames'
 import { useTeam } from '../../contexts/TeamContext'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 import { Card } from '../ui/Card'
 import { Badge } from '../ui/Badge'
 import { EmptyState } from '../ui/EmptyState'
+import { useToast } from '../ui/Toast'
 import type { Game, GameType } from '../../types'
 
+function GameResultBadge({ game }: { game: Game }) {
+  if (game.score_us == null || game.score_them == null) return null
+
+  const won = game.score_us > game.score_them
+  const lost = game.score_us < game.score_them
+  const tied = game.score_us === game.score_them
+  const label = won ? 'W' : lost ? 'L' : 'T'
+
+  return (
+    <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+      won ? 'bg-green-100 text-green-700' :
+      lost ? 'bg-red-100 text-red-600' :
+      'bg-yellow-100 text-yellow-700'
+    }`}>
+      {label} {game.score_us}-{game.score_them}
+    </span>
+  )
+}
+
 export function GamesPage() {
+  usePageTitle('Games')
   const { currentTeam } = useTeam()
-  const { games, loading, addGame, deleteGame } = useGames()
+  const { games, loading, addGame, updateGame, deleteGame } = useGames()
   const navigate = useNavigate()
+  const { showError } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
+  const [scoreEditId, setScoreEditId] = useState<string | null>(null)
+  const [scoreForm, setScoreForm] = useState({ score_us: '', score_them: '' })
   const [formData, setFormData] = useState({
     game_date: '',
     opponent: '',
@@ -35,18 +60,31 @@ export function GamesPage() {
     if (game) {
       setShowAddForm(false)
       setFormData({ game_date: '', opponent: '', is_home: true, location: '', game_type: 'game', notes: '' })
+    } else {
+      showError('Failed to add game. Check your connection and try again.')
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Delete this game and its lineup?')) {
+    if (window.confirm('Delete this game and its lineup? This cannot be undone.')) {
       await deleteGame(id)
     }
   }
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr + 'T12:00:00')
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  const openScoreEdit = (game: Game) => {
+    setScoreEditId(game.id)
+    setScoreForm({
+      score_us: game.score_us != null ? String(game.score_us) : '',
+      score_them: game.score_them != null ? String(game.score_them) : '',
+    })
+  }
+
+  const handleScoreSave = async () => {
+    if (!scoreEditId) return
+    const us = scoreForm.score_us.trim() === '' ? null : parseInt(scoreForm.score_us, 10)
+    const them = scoreForm.score_them.trim() === '' ? null : parseInt(scoreForm.score_them, 10)
+    await updateGame(scoreEditId, { score_us: us, score_them: them } as Partial<Game>)
+    setScoreEditId(null)
   }
 
   const gameTypeVariant = (type: GameType) => {
@@ -57,6 +95,20 @@ export function GamesPage() {
       case 'tournament': return 'danger'
     }
   }
+
+  // Season record
+  const record = games.reduce(
+    (acc, g) => {
+      if (g.score_us != null && g.score_them != null) {
+        if (g.score_us > g.score_them) acc.w++
+        else if (g.score_us < g.score_them) acc.l++
+        else acc.t++
+      }
+      return acc
+    },
+    { w: 0, l: 0, t: 0 }
+  )
+  const hasRecord = record.w + record.l + record.t > 0
 
   if (!currentTeam) {
     return <EmptyState title="No Team Selected" description="Create or select a team to manage games." />
@@ -78,7 +130,15 @@ export function GamesPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-navy-700">Games</h1>
-          <p className="text-sm text-navy-400">{games.length} game{games.length !== 1 ? 's' : ''} scheduled</p>
+          <p className="text-sm text-navy-400">
+            {games.length} game{games.length !== 1 ? 's' : ''} scheduled
+            {hasRecord && (
+              <span className="ml-2 inline-flex items-center gap-1.5 font-semibold text-navy-600">
+                <Trophy size={13} className="text-amber-500" />
+                {record.w}-{record.l}{record.t > 0 ? `-${record.t}` : ''}
+              </span>
+            )}
+          </p>
         </div>
         <Button variant="primary" size="sm" onClick={() => setShowAddForm(true)}>
           <Plus size={16} />
@@ -106,8 +166,13 @@ export function GamesPage() {
                   <div className="text-2xl font-bold font-condensed text-navy-700">
                     {new Date(game.game_date + 'T12:00:00').getDate()}
                   </div>
-                  <div className="text-xs text-navy-300">
+                  <div className="text-xs text-navy-300 flex items-center justify-center gap-1">
                     {new Date(game.game_date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}
+                    {game.opponent && (
+                      game.is_home
+                        ? <Home size={10} className="text-field-green" />
+                        : <Plane size={10} className="text-navy-400" />
+                    )}
                   </div>
                 </div>
 
@@ -115,13 +180,14 @@ export function GamesPage() {
 
                 {/* Details */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-navy-700">
                       {game.opponent ? `${game.is_home ? 'vs' : '@'} ${game.opponent}` : 'Team Practice'}
                     </span>
                     <Badge variant={gameTypeVariant(game.game_type)} size="sm">
                       {game.game_type}
                     </Badge>
+                    <GameResultBadge game={game} />
                   </div>
                   {game.location && (
                     <div className="flex items-center gap-1 mt-1 text-xs text-navy-300">
@@ -133,6 +199,15 @@ export function GamesPage() {
 
                 {/* Actions */}
                 <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  {game.game_type !== 'practice' && (
+                    <button
+                      onClick={() => openScoreEdit(game)}
+                      className="p-2 rounded-lg hover:bg-cream-200 text-navy-400 hover:text-field-green transition-colors"
+                      title="Enter score"
+                    >
+                      <Trophy size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={() => navigate(`/lineup/${game.id}`)}
                     className="p-2 rounded-lg hover:bg-cream-200 text-navy-400 hover:text-accent-red transition-colors"
@@ -153,6 +228,40 @@ export function GamesPage() {
           ))}
         </div>
       )}
+
+      {/* Score Entry Modal */}
+      <Modal open={!!scoreEditId} onClose={() => setScoreEditId(null)} title="Enter Game Score">
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-navy-600 mb-1">Our Score</label>
+              <input
+                type="number"
+                min="0"
+                value={scoreForm.score_us}
+                onChange={(e) => setScoreForm(prev => ({ ...prev, score_us: e.target.value }))}
+                className="input-field text-center text-2xl font-bold"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-navy-600 mb-1">Their Score</label>
+              <input
+                type="number"
+                min="0"
+                value={scoreForm.score_them}
+                onChange={(e) => setScoreForm(prev => ({ ...prev, score_them: e.target.value }))}
+                className="input-field text-center text-2xl font-bold"
+                placeholder="0"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <Button variant="outline" onClick={() => setScoreEditId(null)}>Cancel</Button>
+            <Button variant="primary" onClick={handleScoreSave}>Save Score</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Add Game Modal */}
       <Modal open={showAddForm} onClose={() => setShowAddForm(false)} title="Add Game">
@@ -201,6 +310,7 @@ export function GamesPage() {
               onChange={(e) => setFormData(prev => ({ ...prev, opponent: e.target.value }))}
               className="input-field"
               placeholder="e.g. Eagles"
+              maxLength={100}
             />
           </div>
           <div>
@@ -211,6 +321,7 @@ export function GamesPage() {
               onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
               className="input-field"
               placeholder="e.g. Central Park Field 3"
+              maxLength={200}
             />
           </div>
           <div>
@@ -220,6 +331,7 @@ export function GamesPage() {
               onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
               className="input-field resize-none"
               rows={2}
+              maxLength={500}
             />
           </div>
           <div className="flex gap-3 justify-end pt-2">

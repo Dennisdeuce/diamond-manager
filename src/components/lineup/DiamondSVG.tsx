@@ -32,7 +32,7 @@ function FieldSlot({
   })
 
   return (
-    <g ref={setNodeRef as any}>
+    <g ref={setNodeRef as any} role="button" aria-label={`${position} position${player ? `: ${player.first_name} ${player.last_name}` : ' — empty, drag a player here'}`}>
       {/* Drop zone circle */}
       <circle
         cx={x}

@@ -52,7 +52,7 @@ export function ShareLineupModal({ draft, players, game, teamName, onClose }: Sh
           {copied ? <Check size={16} /> : <Copy size={16} />}
           {copied ? 'Copied!' : 'Copy'}
         </Button>
-        {typeof navigator !== 'undefined' && navigator.share && (
+        {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
           <Button variant="primary" onClick={handleShare}>
             <Share2 size={16} />
             Share

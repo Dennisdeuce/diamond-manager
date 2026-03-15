@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useTeam } from '../contexts/TeamContext'
+import { reportError } from './useErrorReporter'
 import type { Player, PlayerImportRow } from '../types'
 
 // Demo players for demo mode
@@ -23,6 +24,10 @@ export function usePlayers() {
   const [players, setPlayers] = useState<Player[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Request deduplication: track in-flight fetch
+  const fetchInFlight = useRef(false)
+  const lastTeamId = useRef<string | null>(null)
+
   const fetchPlayers = useCallback(async () => {
     if (isDemoMode) {
       setPlayers(DEMO_PLAYERS)
@@ -35,17 +40,30 @@ export function usePlayers() {
       return
     }
 
-    setLoading(true)
-    const { data, error } = await supabase
-      .from('players')
-      .select('*')
-      .eq('team_id', currentTeam.id)
-      .order('last_name')
+    // Deduplicate: skip if same team fetch already in flight
+    if (fetchInFlight.current && lastTeamId.current === currentTeam.id) return
+    fetchInFlight.current = true
+    lastTeamId.current = currentTeam.id
 
-    if (!error && data) {
-      setPlayers(data)
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('team_id', currentTeam.id)
+        .order('last_name')
+
+      if (error) {
+        reportError('Failed to fetch players', 'usePlayers.fetch', error)
+      } else if (data) {
+        setPlayers(data)
+      }
+    } catch (err) {
+      reportError('Network error fetching players', 'usePlayers.fetch', err)
+    } finally {
+      setLoading(false)
+      fetchInFlight.current = false
     }
-    setLoading(false)
   }, [currentTeam, isDemoMode])
 
   useEffect(() => {
@@ -67,52 +85,121 @@ export function usePlayers() {
 
     if (!currentTeam) return null
 
-    const { data, error } = await supabase
-      .from('players')
-      .insert({ ...player, team_id: currentTeam.id })
-      .select()
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .insert({ ...player, team_id: currentTeam.id })
+        .select()
+        .single()
 
-    if (!error && data) {
-      setPlayers(prev => [...prev, data])
-      return data
+      if (!error && data) {
+        setPlayers(prev => [...prev, data])
+        return data
+      }
+      reportError('Add player failed', 'usePlayers.add', error)
+      return null
+    } catch (err) {
+      reportError('Add player exception', 'usePlayers.add', err)
+      return null
     }
-    return null
   }
 
-  const updatePlayer = async (id: string, updates: Partial<Player>) => {
+  const updatePlayer = async (id: string, updates: Partial<Player>): Promise<boolean> => {
     if (isDemoMode) {
       setPlayers(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)))
-      return
+      return true
     }
 
-    const { data, error } = await supabase
-      .from('players')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
-      .single()
+    // Optimistic update: apply immediately, rollback on failure
+    const previousPlayers = players
+    setPlayers(prev => prev.map(p => (p.id === id ? { ...p, ...updates } : p)))
 
-    if (!error && data) {
-      setPlayers(prev => prev.map(p => (p.id === id ? data : p)))
+    try {
+      const { data, error } = await supabase
+        .from('players')
+        .update({ ...updates, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single()
+
+      if (!error && data) {
+        // Replace with server-confirmed data
+        setPlayers(prev => prev.map(p => (p.id === id ? data : p)))
+        return true
+      }
+      // Rollback on error
+      reportError('Update player failed', 'usePlayers.update', error)
+      setPlayers(previousPlayers)
+      return false
+    } catch (err) {
+      reportError('Update player exception', 'usePlayers.update', err)
+      setPlayers(previousPlayers)
+      return false
     }
   }
 
-  const deletePlayer = async (id: string) => {
+  const deletePlayer = async (id: string): Promise<boolean> => {
     if (isDemoMode) {
       setPlayers(prev => prev.filter(p => p.id !== id))
-      return
+      return true
     }
 
-    const { error } = await supabase.from('players').delete().eq('id', id)
-    if (!error) {
-      setPlayers(prev => prev.filter(p => p.id !== id))
+    // Optimistic delete
+    const previousPlayers = players
+    setPlayers(prev => prev.filter(p => p.id !== id))
+
+    try {
+      const { error } = await supabase.from('players').delete().eq('id', id)
+      if (!error) {
+        return true
+      }
+      // Rollback
+      reportError('Delete player failed', 'usePlayers.delete', error)
+      setPlayers(previousPlayers)
+      return false
+    } catch (err) {
+      reportError('Delete player exception', 'usePlayers.delete', err)
+      setPlayers(previousPlayers)
+      return false
     }
   }
 
   const bulkImport = async (rows: PlayerImportRow[]): Promise<number> => {
     if (!currentTeam && !isDemoMode) return 0
 
+    // Batch insert for performance (instead of N sequential inserts)
+    if (!isDemoMode && currentTeam) {
+      const insertRows = rows.map(row => ({
+        first_name: row.firstName,
+        last_name: row.lastName,
+        jersey_number: row.jerseyNumber ?? null,
+        bats: row.bats ?? null,
+        throws: row.throws ?? null,
+        preferred_positions: row.preferredPositions ?? [],
+        active: true,
+        notes: null,
+        team_id: currentTeam.id,
+      }))
+
+      try {
+        const { data, error } = await supabase
+          .from('players')
+          .insert(insertRows)
+          .select()
+
+        if (!error && data) {
+          setPlayers(prev => [...prev, ...data])
+          return data.length
+        }
+        reportError('Bulk import failed', 'usePlayers.bulkImport', error)
+        return 0
+      } catch (err) {
+        reportError('Bulk import exception', 'usePlayers.bulkImport', err)
+        return 0
+      }
+    }
+
+    // Demo mode: add one at a time
     let count = 0
     for (const row of rows) {
       const result = await addPlayer({

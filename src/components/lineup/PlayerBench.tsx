@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { PlayerChip } from './PlayerChip'
 import type { Player } from '../../types'
 
@@ -6,7 +7,7 @@ interface PlayerBenchProps {
   assignedPlayerIds: Set<string>
 }
 
-export function PlayerBench({ players, assignedPlayerIds }: PlayerBenchProps) {
+export const PlayerBench = memo(function PlayerBench({ players, assignedPlayerIds }: PlayerBenchProps) {
   const benchPlayers = players.filter(p => p.active && !assignedPlayerIds.has(p.id))
 
   if (benchPlayers.length === 0 && players.length > 0) {
@@ -38,4 +39,4 @@ export function PlayerBench({ players, assignedPlayerIds }: PlayerBenchProps) {
       ))}
     </div>
   )
-}
+})

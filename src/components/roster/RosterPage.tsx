@@ -1,38 +1,51 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { UserPlus, Upload, Search } from 'lucide-react'
 import { usePlayers } from '../../hooks/usePlayers'
 import { useTeam } from '../../contexts/TeamContext'
+import { useDebounce } from '../../hooks/useDebounce'
+import { usePageTitle } from '../../hooks/usePageTitle'
 import { PlayerCard } from './PlayerCard'
 import { PlayerForm } from './PlayerForm'
 import { ImportPlayersModal } from './ImportPlayersModal'
 import { Button } from '../ui/Button'
 import { Modal } from '../ui/Modal'
 import { EmptyState } from '../ui/EmptyState'
+import { useToast } from '../ui/Toast'
 import type { Player } from '../../types'
 
 export function RosterPage() {
+  usePageTitle('Roster')
   const { currentTeam } = useTeam()
   const { players, loading, addPlayer, updatePlayer, deletePlayer, bulkImport } = usePlayers()
+  const { showError } = useToast()
   const [showAddForm, setShowAddForm] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null)
   const [showImport, setShowImport] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [formLoading, setFormLoading] = useState(false)
 
-  const filteredPlayers = players.filter(p => {
-    const q = searchQuery.toLowerCase()
-    return (
+  // Debounce search for large rosters (150ms)
+  const debouncedSearch = useDebounce(searchQuery, 150)
+
+  const filteredPlayers = useMemo(() => {
+    const q = debouncedSearch.toLowerCase()
+    if (!q) return players
+    return players.filter(p =>
       p.first_name.toLowerCase().includes(q) ||
       p.last_name.toLowerCase().includes(q) ||
       (p.jersey_number != null && p.jersey_number.toString().includes(q))
     )
-  })
+  }, [players, debouncedSearch])
 
   const handleAdd = async (data: Parameters<typeof addPlayer>[0]) => {
     setFormLoading(true)
-    await addPlayer(data)
+    const result = await addPlayer(data)
     setFormLoading(false)
-    setShowAddForm(false)
+    if (result) {
+      setShowAddForm(false)
+    } else {
+      showError('Failed to add player. Check your connection and try again.')
+    }
   }
 
   const handleUpdate = async (data: Parameters<typeof updatePlayer>[1]) => {
@@ -98,6 +111,8 @@ export function RosterPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="input-field pl-9"
             placeholder="Search players..."
+            aria-label="Search players"
+            maxLength={100}
           />
         </div>
       )}
