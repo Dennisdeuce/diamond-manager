@@ -35,12 +35,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
 
       <aside
         className={clsx(
-          'fixed top-0 left-0 z-50 h-full w-64 bg-navy-600 shadow-lg transform transition-transform duration-300 lg:relative lg:transform-none lg:z-auto',
+          'fixed top-0 left-0 z-50 h-full w-64 bg-navy-600 shadow-lg transform transition-transform duration-300 lg:relative lg:transform-none lg:z-auto flex flex-col',
           open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
         {/* Logo */}
-        <div className="px-5 py-5 flex items-center justify-between">
+        <div className="px-5 py-5 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
               <svg width="26" height="26" viewBox="0 0 100 100">
@@ -69,12 +69,12 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         {/* Stitching divider */}
-        <div className="px-4 mb-2">
+        <div className="px-4 mb-2 shrink-0">
           <BaseballStitching />
         </div>
 
         {/* Nav */}
-        <nav className="px-3 space-y-1" aria-label="Main navigation">
+        <nav className="px-3 space-y-1 flex-1 overflow-y-auto" aria-label="Main navigation">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -96,7 +96,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4">
+        <div className="p-4 shrink-0">
           <div className="px-1 mb-3">
             <BaseballStitching />
           </div>

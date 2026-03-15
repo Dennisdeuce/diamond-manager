@@ -1,0 +1,60 @@
+Initialized empty Git repository in C:/Users/denni/Documents/BaseballLineup/.git/
+[master (root-commit) 1b29e95] feat: Diamond Manager - baseball lineup web app
+ 53 files changed, 4343 insertions(+)
+ create mode 100644 .env.example
+ create mode 100644 .gitignore
+ create mode 100644 index.html
+ create mode 100644 package.json
+ create mode 100644 postcss.config.js
+ create mode 100644 public/favicon.svg
+ create mode 100644 src/App.tsx
+ create mode 100644 src/components/auth/AuthGuard.tsx
+ create mode 100644 src/components/auth/LoginPage.tsx
+ create mode 100644 src/components/games/GamesPage.tsx
+ create mode 100644 src/components/history/SeasonHistoryPage.tsx
+ create mode 100644 src/components/layout/AppShell.tsx
+ create mode 100644 src/components/layout/Header.tsx
+ create mode 100644 src/components/layout/Sidebar.tsx
+ create mode 100644 src/components/lineup/BattingOrderTab.tsx
+ create mode 100644 src/components/lineup/DiamondSVG.tsx
+ create mode 100644 src/components/lineup/FieldPositionsTab.tsx
+ create mode 100644 src/components/lineup/LineupBuilderPage.tsx
+ create mode 100644 src/components/lineup/PlayerBench.tsx
+ create mode 100644 src/components/lineup/PlayerChip.tsx
+ create mode 100644 src/components/lineup/ShareLineupModal.tsx
+ create mode 100644 src/components/roster/ImportPlayersModal.tsx
+ create mode 100644 src/components/roster/PlayerCard.tsx
+ create mode 100644 src/components/roster/PlayerForm.tsx
+ create mode 100644 src/components/roster/RosterPage.tsx
+ create mode 100644 src/components/settings/SettingsPage.tsx
+ create mode 100644 src/components/ui/Badge.tsx
+ create mode 100644 src/components/ui/Button.tsx
+ create mode 100644 src/components/ui/Card.tsx
+ create mode 100644 src/components/ui/EmptyState.tsx
+ create mode 100644 src/components/ui/Modal.tsx
+ create mode 100644 src/components/ui/Tabs.tsx
+ create mode 100644 src/contexts/AuthContext.tsx
+ create mode 100644 src/contexts/TeamContext.tsx
+ create mode 100644 src/hooks/useGames.ts
+ create mode 100644 src/hooks/useLineup.ts
+ create mode 100644 src/hooks/usePlayers.ts
+ create mode 100644 src/index.css
+ create mode 100644 src/lib/constants.ts
+ create mode 100644 src/lib/supabase.ts
+ create mode 100644 src/main.tsx
+ create mode 100644 src/services/autoSuggest.ts
+ create mode 100644 src/services/playerImport.ts
+ create mode 100644 src/services/shareLineup.ts
+ create mode 100644 src/types/index.ts
+ create mode 100644 src/vite-env.d.ts
+ create mode 100644 supabase/migrations/00001_create_tables.sql
+ create mode 100644 supabase/migrations/00002_rls_policies.sql
+ create mode 100644 supabase/migrations/00003_position_history_trigger.sql
+ create mode 100644 tailwind.config.ts
+ create mode 100644 tsconfig.json
+ create mode 100644 vercel.json
+ create mode 100644 vite.config.ts
+To https://github.com/Dennisdeuce/diamond-manager.git
+ * [new branch]      main -> main
+branch 'main' set up to track 'origin/main'.
+EXIT_CODE=0 
